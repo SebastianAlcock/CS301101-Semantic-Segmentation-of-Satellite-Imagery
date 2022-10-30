@@ -8,4 +8,4 @@
 ![m1](https://user-images.githubusercontent.com/116972894/198857746-9599e410-d8ba-4b9e-864f-f61f52db32af.png)
 
 ### Google Colab Code:
-![m1code](https://user-images.githubusercontent.com/116972894/198857792-da875db2-8cb8-43fb-85c3-47149b8451c4.png)
+![6cd371a1b1254f06f12a78b030e22868](https://user-images.githubusercontent.com/78321301/198858046-0ebff8a2-ee95-4382-b10d-901ca638130f.png)
