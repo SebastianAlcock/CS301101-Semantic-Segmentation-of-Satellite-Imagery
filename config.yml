@@ -22,19 +22,19 @@ searchSpace:
     _type: uniform
     _value: [0, 1]
 
-trialCommand: python3 mnist.py  # The command to launch a trial. NOTE: change "python3" to "python" if you are using Windows.
-trialCodeDirectory: .           # The path of trial code. By default it's ".", which means the same directory of this config file.
-trialGpuNumber: 1               # How many GPUs should each trial use. CUDA is required when it's greater than zero.
+trialCommand: python3 228_training_aerial_imagery.py    # The command to launch a trial. NOTE: change "python3" to "python" if you are using Windows.
+trialCodeDirectory: .                                   # The path of trial code. By default it's ".", which means the same directory of this config file.
+trialGpuNumber: 1                                       # How many GPUs should each trial use. CUDA is required when it's greater than zero.
 
-trialConcurrency: 4             # Run 4 trials concurrently.
-maxTrialNumber: 10              # Generate at most 10 trials.
-maxExperimentDuration: 1h       # Stop generating trials after 1 hour.
+trialConcurrency: 4                                     # Run 4 trials concurrently.
+maxTrialNumber: 10                                      # Generate at most 10 trials.
+maxExperimentDuration: 1h                               # Stop generating trials after 1 hour.
 
-tuner:                          # Configure the tuning algorithm.
-  name: Unet                    # Supported algorithms: TPE, Random, Anneal, Evolution, GridSearch, GPTuner, PBTTuner, etc.
-                                #   Full list:  https://nni.readthedocs.io/en/latest/Tuner/BuiltinTuner.html
-  classArgs:                    # Algorithm specific arguments. See the tuner's doc for details.
-    optimize_mode: maximize     #   "minimize" or "maximize"
+tuner:                                                  # Configure the tuning algorithm.
+  name: TPE                                             # Supported algorithms: TPE, Random, Anneal, Evolution, GridSearch, GPTuner, PBTTuner, etc.
+                                                        #   Full list:  https://nni.readthedocs.io/en/latest/Tuner/BuiltinTuner.html
+  classArgs:                                            # Algorithm specific arguments. See the tuner's doc for details.
+    optimize_mode: maximize                             #   "minimize" or "maximize"
 
 # Configure the training platform.
 # Supported platforms: local, remote, openpai, aml, kubeflow, kubernetes, adl.
