@@ -354,6 +354,7 @@ nni.report_final_result(accuracy)
 import nni
 import tensorflow as tf
 from keras.models import load_model
+from semseg_repo.nni.simple_multi_unet_model import multi_unet_model, jacard_coef
 
 params = {
     'dense_units': 128,
@@ -366,9 +367,7 @@ optimized_params = nni.get_next_parameter()
 params.update(optimized_params)
 print(params)
 
-model = load_model("models/satellite_standard_unet_100epochs.hdf5",
-                   custom_objects={'dice_loss_plus_1focal_loss': total_loss,
-                                   'jacard_coef':jacard_coef})
+model = multi_unet_model(n_classes=n_classes, IMG_HEIGHT=IMG_HEIGHT, IMG_WIDTH=IMG_WIDTH, IMG_CHANNELS=IMG_CHANNELS)
 
 adam = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
