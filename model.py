@@ -1,6 +1,7 @@
-#Model.py
 import nni
 import tensorflow as tf
+from keras.models import load_model
+
 params = {
     'dense_units': 128,
     'activation_type': 'relu',
@@ -12,27 +13,19 @@ optimized_params = nni.get_next_parameter()
 params.update(optimized_params)
 print(params)
 
-mnist = tf.keras.datasets.mnist
-
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
-
-model = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(28,28)),
-    tf.keras.layers.Dense(params['dense_units'], activation=params['activation_type']),
-    tf.keras.layers.Dropout(params['dropout_rate']),
-    tf.keras.layers.Dense(10)
-])
+model = load_model("models/satellite_standard_unet_100epochs.hdf5",
+                   custom_objects={'dice_loss_plus_1focal_loss': total_loss,
+                                   'jacard_coef':jacard_coef})
 
 adam = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-model.compile(optimizer=adam, loss=loss_fn, metrics=['accuracy'])
+model.compile(optimizer=adam, loss=total_loss, metrics=['accuracy', jacard_coef])
 
 callback = tf.keras.callbacks.LambdaCallback(
     on_epoch_end = lambda epoch, logs: nni.report_intermediate_result(logs['accuracy'])
 )
 
-model.fit(x_train, y_train, epochs=20, verbose=2, callbacks=[callback])
-loss, accuracy = model.evaluate(x_test, y_test, verbose=2)
+model.fit(X_train, y_train, batch_size=16, verbose=1, epochs=10, validation_data=(X_test, y_test), callbacks=[callback])
+accuracy = model.evaluate(X_test, y_test, verbose=1)
 
 nni.report_final_result(accuracy)
