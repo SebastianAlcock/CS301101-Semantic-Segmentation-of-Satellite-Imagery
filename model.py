@@ -355,6 +355,7 @@ import nni
 import tensorflow as tf
 from keras.models import load_model
 from semseg_repo.nni.simple_multi_unet_model import multi_unet_model, jacard_coef
+import segmentation_models as sm
 
 params = {
     'dense_units': 128,
@@ -370,7 +371,11 @@ print(params)
 model = multi_unet_model(n_classes=n_classes, IMG_HEIGHT=IMG_HEIGHT, IMG_WIDTH=IMG_WIDTH, IMG_CHANNELS=IMG_CHANNELS)
 
 adam = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+
+dice_loss = sm.losses.DiceLoss(class_weights=weights) 
+focal_loss = sm.losses.CategoricalFocalLoss()
+total_loss = dice_loss + (1 * focal_loss)
+
 model.compile(optimizer=adam, loss=total_loss, metrics='accuracy')
 
 callback = tf.keras.callbacks.LambdaCallback(
