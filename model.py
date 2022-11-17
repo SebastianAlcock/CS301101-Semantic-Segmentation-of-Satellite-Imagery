@@ -1,3 +1,4 @@
+import nni
 import os
 import cv2
 import sys
