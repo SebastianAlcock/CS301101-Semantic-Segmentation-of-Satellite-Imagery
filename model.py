@@ -1,4 +1,5 @@
-'''
+#start comment
+
 import nni
 import tensorflow as tf
 from keras.models import Model
@@ -256,7 +257,7 @@ IMG_WIDTH  = X_train.shape[2]
 IMG_CHANNELS = X_train.shape[3]
 
 params = {
-    'dense_units': 128,
+  
     'activation_type': 'relu',
     'dropout_rate': 0.2,
     'learning_rate': 0.001,
@@ -349,15 +350,15 @@ plt.xlabel('Recall')
 plt.ylabel('Presicion')
 
 nni.report_final_result(accuracy)
-'''
 
+#end comment here
 import nni
 import tensorflow as tf
 from keras.models import load_model
 from semseg_repo.nni.simple_multi_unet_model import multi_unet_model, jacard_coef
 
 params = {
-    'dense_units': 128,
+   
     'activation_type': 'relu',
     'dropout_rate': 0.2,
     'learning_rate': 0.001,
