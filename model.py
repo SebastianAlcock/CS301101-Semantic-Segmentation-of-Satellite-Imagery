@@ -284,7 +284,11 @@ adam = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
 
 model.compile(optimizer=adam, loss=total_loss, metrics='accuracy')
 
-model.fit(X_train, y_train, batch_size=16, verbose=1, epochs=10, validation_data=(X_test, y_test))
+callback = tf.keras.callbacks.LambdaCallback(
+    on_epoch_end = lambda epoch, logs: nni.report_intermediate_result(logs['accuracy'])
+)
+
+model.fit(X_train, y_train, batch_size=16, verbose=1, epochs=10, validation_data=(X_test, y_test), callbacks=[callback])
 accuracy = model.evaluate(X_test, y_test, verbose=1)
 
 nni.report_final_result(accuracy)
