@@ -86,7 +86,7 @@ def multi_unet_model(n_classes=4, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=1)
     return model
 
 # TODO:
-root_directory = 'semseg_repo/nni/Semantic segmentation dataset/'
+root_directory = '/Semantic segmentation dataset/'
 
 patch_size = 256
 
