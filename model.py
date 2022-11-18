@@ -85,6 +85,9 @@ def multi_unet_model(n_classes=4, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=1)
     
     return model
 
+from git import Repo
+Repo.clone_from(https://github.com/SebastianAlcock/CS301101-Semantic-Segmentation-of-Satellite-Imagery, semseg_repo/nni)
+
 # TODO:
 root_directory = 'semseg_repo/nni/Semantic segmentation dataset/'
 
