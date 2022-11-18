@@ -254,7 +254,7 @@ callback = tf.keras.callbacks.LambdaCallback(
     on_epoch_end = lambda epoch, logs: nni.report_intermediate_result(logs['accuracy'])
 )
 
-model.fit(X_train, y_train, batch_size=params['batch_size'], epochs=10, validation_data=(X_test, y_test), callbacks=[callback])
+model.fit(X_train, y_train, batch_size=params['batch_size'], epochs=50, validation_data=(X_test, y_test), callbacks=[callback])
 loss, accuracy = model.evaluate(X_test, y_test)
 
 nni.report_final_result(accuracy)
