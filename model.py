@@ -4,7 +4,6 @@ import cv2
 import sys
 import tensorflow as tf
 import numpy as np
-import git
 
 from matplotlib import pyplot as plt
 from patchify import patchify
