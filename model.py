@@ -255,6 +255,6 @@ callback = tf.keras.callbacks.LambdaCallback(
 )
 
 model.fit(X_train, y_train, batch_size=params['batch_size'], epochs=10, validation_data=(X_test, y_test), callbacks=[callback])
-accuracy = model.evaluate(X_test, y_test)
+loss, accuracy = model.evaluate(X_test, y_test)
 
 nni.report_final_result(accuracy)
