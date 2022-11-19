@@ -1,10 +1,4 @@
-#start comment
-
 import nni
-import tensorflow as tf
-from keras.models import Model
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Conv2DTranspose, BatchNormalization, Dropout, Lambda
-from keras import backend as K
 import os
 import cv2
 import sys
@@ -18,80 +12,84 @@ import segmentation_models as sm
 from tensorflow.keras.metrics import MeanIoU
 
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+scaler = MinMaxScaler()
 
-def multi_unet_model(n_classes=4, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=1):
+from keras.models import Model
+from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate, Conv2DTranspose, BatchNormalization, Dropout, Lambda
+from keras import backend as K
+
+def multi_unet_model(n_classes=4, IMG_HEIGHT=256, IMG_WIDTH=256, IMG_CHANNELS=1, activation_type='relu'):
 #Build the model
     inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
     #s = Lambda(lambda x: x / 255)(inputs)   #No need for this if we normalize our inputs beforehand
     s = inputs
 
     #Contraction path
-    c1 = Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(s)
+    c1 = Conv2D(16, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(s)
     c1 = Dropout(0.2)(c1)  # Original 0.1
-    c1 = Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1)
+    c1 = Conv2D(16, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c1)
     p1 = MaxPooling2D((2, 2))(c1)
     
-    c2 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p1)
+    c2 = Conv2D(32, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(p1)
     c2 = Dropout(0.2)(c2)  # Original 0.1
-    c2 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c2)
+    c2 = Conv2D(32, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c2)
     p2 = MaxPooling2D((2, 2))(c2)
      
-    c3 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p2)
+    c3 = Conv2D(64, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(p2)
     c3 = Dropout(0.2)(c3)
-    c3 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c3)
+    c3 = Conv2D(64, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c3)
     p3 = MaxPooling2D((2, 2))(c3)
      
-    c4 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p3)
+    c4 = Conv2D(128, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(p3)
     c4 = Dropout(0.2)(c4)
-    c4 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c4)
+    c4 = Conv2D(128, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c4)
     p4 = MaxPooling2D(pool_size=(2, 2))(c4)
      
-    c5 = Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p4)
+    c5 = Conv2D(256, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(p4)
     c5 = Dropout(0.3)(c5)
-    c5 = Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5)
+    c5 = Conv2D(256, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c5)
     
     #Expansive path 
     u6 = Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(c5)
     u6 = concatenate([u6, c4])
-    c6 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u6)
+    c6 = Conv2D(128, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(u6)
     c6 = Dropout(0.2)(c6)
-    c6 = Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c6)
+    c6 = Conv2D(128, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c6)
      
     u7 = Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(c6)
     u7 = concatenate([u7, c3])
-    c7 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u7)
+    c7 = Conv2D(64, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(u7)
     c7 = Dropout(0.2)(c7)
-    c7 = Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c7)
+    c7 = Conv2D(64, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c7)
      
     u8 = Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(c7)
     u8 = concatenate([u8, c2])
-    c8 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u8)
+    c8 = Conv2D(32, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(u8)
     c8 = Dropout(0.2)(c8)  # Original 0.1
-    c8 = Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c8)
+    c8 = Conv2D(32, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c8)
      
     u9 = Conv2DTranspose(16, (2, 2), strides=(2, 2), padding='same')(c8)
     u9 = concatenate([u9, c1], axis=3)
-    c9 = Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u9)
+    c9 = Conv2D(16, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(u9)
     c9 = Dropout(0.2)(c9)  # Original 0.1
-    c9 = Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c9)
+    c9 = Conv2D(16, (3, 3), activation=activation_type, kernel_initializer='he_normal', padding='same')(c9)
      
     outputs = Conv2D(n_classes, (1, 1), activation='softmax')(c9)
      
     model = Model(inputs=[inputs], outputs=[outputs])
     
+    #NOTE: Compile the model in the main program to make it easy to test with various loss functions
+    #model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    
+    #model.summary()
+    
     return model
 
-scaler = MinMaxScaler()
-
-root_directory = 'semseg_repo/nni/Semantic segmentation dataset/'
+# TODO:
+root_directory = '/content/semseg_repo/nni/Semantic segmentation dataset/'
 
 patch_size = 256
 
-#Read images from repsective 'images' subdirectory
-#As all images are of ddifferent size we have 2 options, either resize or crop
-#But, some images are too large and some small. Resizing will change the size of real objects.
-#Therefore, we will crop them to a nearest size divisible by 256 and then 
-#divide all images into patches of 256x256x3. 
 image_dataset = []  
 for path, subdirs, files in os.walk(root_directory):
     #print(path)  
@@ -162,27 +160,13 @@ for path, subdirs, files in os.walk(root_directory):
 image_dataset = np.array(image_dataset)
 mask_dataset =  np.array(mask_dataset)
 
-#sys.exit("Exited early")
-
 ############################################################################
-"""
-RGB to HEX: (Hexadecimel --> base 16)
-This number divided by sixteen (integer division; ignoring any remainder) gives 
-the first hexadecimal digit (between 0 and F, where the letters A to F represent 
-the numbers 10 to 15). The remainder gives the second hexadecimal digit. 
-0-9 --> 0-9
-10-15 --> A-F
-Example: RGB --> R=201, G=, B=
-R = 201/16 = 12 with remainder of 9. So hex code for R is C9 (remember C=12)
-Calculating RGB from HEX: #3C1098
-3C = 3*16 + 12 = 60
-10 = 1*16 + 0 = 16
-98 = 9*16 + 8 = 152
-"""
+
 #Convert HEX to RGB array
 # Try the following to understand how python handles hex values...
+
 a=int('3C', 16)  #3C with base 16. Should return 60. 
-#print(a)
+
 #Do the same for all RGB channels in each hex code to convert to RGB
 Building = '#3C1098'.lstrip('#')
 Building = np.array(tuple(int(Building[i:i+2], 16) for i in (0, 2, 4))) # 60, 16, 152
@@ -204,9 +188,6 @@ Unlabeled = np.array(tuple(int(Unlabeled[i:i+2], 16) for i in (0, 2, 4))) #155, 
 
 label = single_patch_mask
 
-# Now replace RGB to integer values to be used as labels.
-# Find pixels with combination of RGB for the above defined arrays...
-# if matches then replace all values in that pixel with a specific integer
 def rgb_to_2D_label(label):
     """
     Suply our labale masks as input in RGB format. 
@@ -232,8 +213,6 @@ for i in range(mask_dataset.shape[0]):
 labels = np.array(labels)   
 labels = np.expand_dims(labels, axis=3)
 
-#print("Unique labels in label dataset are: ", np.unique(labels))
-
 ############################################################################
 
 n_classes = len(np.unique(labels))
@@ -247,6 +226,15 @@ X_train, X_test, y_train, y_test = train_test_split(image_dataset, labels_cat, t
 
 #Parameters for model
 
+params = {
+    'learning_rate': 0.001,
+    'activation_type': 'relu',
+    'batch_size': 16
+}
+
+optimized_params = nni.get_next_parameter()
+params.update(optimized_params)
+
 weights = [0.1666, 0.1666, 0.1666, 0.1666, 0.1666, 0.1666]
 dice_loss = sm.losses.DiceLoss(class_weights=weights) 
 focal_loss = sm.losses.CategoricalFocalLoss()
@@ -256,129 +244,17 @@ IMG_HEIGHT = X_train.shape[1]
 IMG_WIDTH  = X_train.shape[2]
 IMG_CHANNELS = X_train.shape[3]
 
-params = {
-  'dense_units': {'_type': 'choice', '_value': [64, 128, 256]},
-    'activation_type': 'relu',
-    'dropout_rate': 0.2,
-    'learning_rate': 0.001,
-}
-
-optimized_params = nni.get_next_parameter()
-params.update(optimized_params)
-
-metrics=['accuracy']
-
-model = multi_unet_model(n_classes=n_classes, IMG_HEIGHT=IMG_HEIGHT, IMG_WIDTH=IMG_WIDTH, IMG_CHANNELS=IMG_CHANNELS)
+model = multi_unet_model(n_classes=n_classes, IMG_HEIGHT=IMG_HEIGHT, IMG_WIDTH=IMG_WIDTH, IMG_CHANNELS=IMG_CHANNELS, activation_type=params['activation_type'])
 
 adam = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-model.compile(optimizer=adam, loss=total_loss, metrics=['accuracy', jacard_coef])
 
-callback = tf.keras.callbacks.LambdaCallback(
-    on_epoch_end = lambda epoch, logs: nni.report_intermediate_result(logs['accuracy'])
-)
-
-history1 = model.fit(X_train, y_train, batch_size=16, verbose=1, epochs=10, validation_data=(X_test, y_test), callbacks=[callback], shuffle=False)
-accuracy = model.evaluate(X_test, y_test, verbose=1)
-
-#Plot the training and validation accuracy and loss at each epoch
-
-history = history1
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-epochs = range(1, len(loss) + 1)
-plt.plot(epochs, loss, 'y', label='Training loss')
-plt.plot(epochs, val_loss, 'r', label='Validation loss')
-plt.title('Training and validation loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
-plt.legend()
-plt.show()
-
-acc = history.history['jacard_coef']
-val_acc = history.history['val_jacard_coef']
-
-plt.plot(epochs, acc, 'y', label='Training IoU')
-plt.plot(epochs, val_acc, 'r', label='Validation IoU')
-plt.title('Training and validation IoU')
-plt.xlabel('Epochs')
-plt.ylabel('IoU')
-plt.legend()
-plt.show()
-
-#IOU
-y_pred=model.predict(X_test)
-y_pred_argmax=np.argmax(y_pred, axis=3)
-y_test_argmax=np.argmax(y_test, axis=3)
-
-#Normalized values
-y_pred_argmax_normalized = tf.math.divide(tf.math.subtract(y_pred_argmax, tf.math.reduce_min(y_pred_argmax)), tf.math.subtract(tf.math.reduce_max(y_pred_argmax), tf.math.reduce_min(y_pred_argmax)))
-y_test_argmax_normalized = tf.math.divide(tf.math.subtract(y_test_argmax, tf.math.reduce_min(y_test_argmax)), tf.math.subtract(tf.math.reduce_max(y_test_argmax), tf.math.reduce_min(y_test_argmax)))
-
-precision_list = []
-recall_list = []
-threshold_list = np.arange(0.0, 1.0, 0.001, dtype=float)
-for threshold in threshold_list:
-  precision_sum = 0
-  recall_sum = 0
-
-  for i in range(n_classes):
-    #Using built in keras function for Precision
-    precision_keras = tf.keras.metrics.Precision(class_id = i, thresholds = threshold)
-    precision_keras.update_state(y_test_argmax_normalized, y_pred_argmax_normalized)
-    precision_sum += precision_keras.result().numpy()
-    #Using built in keras function for Recall
-    recall_keras = tf.keras.metrics.Recall(class_id = i, thresholds = threshold)
-    recall_keras.update_state(y_test_argmax_normalized, y_pred_argmax_normalized)
-    recall_sum += recall_keras.result().numpy()
-
-  mean_precision = precision_sum / n_classes
-  mean_recall = recall_sum / n_classes
-
-  precision_list.append(mean_precision)
-  recall_list.append(mean_recall)
-
-recall_list.append(0)
-precision_list.append(1)
-
-recall_list.insert(0, 1)
-precision_list.insert(0, 0)
-
-plt.plot(recall_list, precision_list, 'b')
-plt.title("Precision Recall Curve")
-plt.xlabel('Recall')
-plt.ylabel('Presicion')
-
-nni.report_final_result(accuracy)
-
-#end comment here
-import nni
-import tensorflow as tf
-from keras.models import load_model
-from semseg_repo.nni.simple_multi_unet_model import multi_unet_model, jacard_coef
-
-params = {
-   'dense_units': {'_type': 'choice', '_value': [64, 128, 256]},
-    'activation_type': 'relu',
-    'dropout_rate': 0.2,
-    'learning_rate': 0.001,
-}
-
-optimized_params = nni.get_next_parameter()
-params.update(optimized_params)
-print(params)
-
-model = multi_unet_model(n_classes=n_classes, IMG_HEIGHT=IMG_HEIGHT, IMG_WIDTH=IMG_WIDTH, IMG_CHANNELS=IMG_CHANNELS)
-
-adam = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(optimizer=adam, loss=total_loss, metrics='accuracy')
 
 callback = tf.keras.callbacks.LambdaCallback(
     on_epoch_end = lambda epoch, logs: nni.report_intermediate_result(logs['accuracy'])
 )
 
-model.fit(X_train, y_train, batch_size=16, verbose=1, epochs=10, validation_data=(X_test, y_test), callbacks=[callback])
-accuracy = model.evaluate(X_test, y_test, verbose=1)
+model.fit(X_train, y_train, batch_size=params['batch_size'], epochs=50, validation_data=(X_test, y_test), callbacks=[callback])
+loss, accuracy = model.evaluate(X_test, y_test)
 
 nni.report_final_result(accuracy)
